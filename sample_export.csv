@@ -1,0 +1,8 @@
+ID,User,Title,Description,Amount,Category,Status,Submitted Date,Approved Date,Approved By
+exp-1,Mike Davis,Business Trip to NYC,Flight and hotel for client meeting,1250.00,travel,approved,2025-07-12,2025-07-12,Sarah Johnson
+exp-2,Mike Davis,Team Lunch,Lunch with development team,85.50,meals,approved,2025-07-11,2025-07-12,Sarah Johnson
+exp-3,Sarah Johnson,Office Supplies,Whiteboard markers and sticky notes,45.30,office,approved,2025-07-10,2025-07-11,John Smith
+exp-4,Mike Davis,Software License Renewal,Annual subscription for development tools,299.99,software,rejected,2025-07-12,,
+exp-5,John Smith,Conference Registration,Annual Tech Conference 2025,1500.00,training,approved,2025-07-12,2025-07-12,Sarah Johnson
+exp-6,Sarah Johnson,Client Dinner,Business dinner with potential client,180.75,meals,pending,2025-07-12,,
+exp-7,Mike Davis,Taxi to Airport,Transportation for business trip,65.00,travel,approved,2025-07-12,2025-07-12,Sarah Johnson
