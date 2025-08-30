@@ -35,7 +35,7 @@ player_placement_matches = {
 }  # Dictionary to track placement matches {user_id: count}
 leaderboard_channel_id = None  # Channel for auto-updating leaderboard
 leaderboard_message = None  # Store leaderboard message
-results_channel_id = 1395514923785916499  # Channel for match results notifications
+results_channel_id = 1410840976754348137  # Channel for match results notifications
 matches_category_id = 1396633160267071548  # Category for creating match channels
 match_counter = 1  # Counter for sequential match names (HSM1, HSM2, HSM3...)
 
