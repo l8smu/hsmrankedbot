@@ -441,7 +441,13 @@ class BotStatusAdminView(discord.ui.View):
     
     @discord.ui.button(label='🟢 متاح', style=discord.ButtonStyle.success, emoji='🟢')
     async def set_available(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """Set bot status to available"""
+        """Set bot status to available - ADMIN ONLY"""
+        # Check authorization first
+        ADMIN_USER_IDS = [882391937217364018, 439563168897957888, 797509248569009138, 844344445797531679]
+        if interaction.user.id not in ADMIN_USER_IDS:
+            await interaction.response.send_message("❌ ليس لديك صلاحية للتحكم في حالة البوت!", ephemeral=True)
+            return
+            
         global bot_status_mode
         bot_status_mode = "available"
         
@@ -466,7 +472,13 @@ class BotStatusAdminView(discord.ui.View):
     
     @discord.ui.button(label='🟡 صيانة', style=discord.ButtonStyle.secondary, emoji='🟡')
     async def set_maintenance(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """Set bot status to maintenance"""
+        """Set bot status to maintenance - ADMIN ONLY"""
+        # Check authorization first
+        ADMIN_USER_IDS = [882391937217364018, 439563168897957888, 797509248569009138, 844344445797531679]
+        if interaction.user.id not in ADMIN_USER_IDS:
+            await interaction.response.send_message("❌ ليس لديك صلاحية للتحكم في حالة البوت!", ephemeral=True)
+            return
+            
         global bot_status_mode
         bot_status_mode = "maintenance"
         
@@ -491,7 +503,13 @@ class BotStatusAdminView(discord.ui.View):
     
     @discord.ui.button(label='🔴 متوقف', style=discord.ButtonStyle.danger, emoji='🔴')
     async def set_offline(self, interaction: discord.Interaction, button: discord.ui.Button):
-        """Set bot status to offline"""
+        """Set bot status to offline - ADMIN ONLY"""
+        # Check authorization first
+        ADMIN_USER_IDS = [882391937217364018, 439563168897957888, 797509248569009138, 844344445797531679]
+        if interaction.user.id not in ADMIN_USER_IDS:
+            await interaction.response.send_message("❌ ليس لديك صلاحية للتحكم في حالة البوت!", ephemeral=True)
+            return
+            
         global bot_status_mode
         bot_status_mode = "offline"
         
@@ -514,17 +532,11 @@ class BotStatusAdminView(discord.ui.View):
         await interaction.response.edit_message(embed=embed, view=self)
         print(f"🔴 ADMIN: {interaction.user.display_name} set bot status to OFFLINE")
 
-# Bot status command - RESTRICTED to authorized admins only
-@bot.tree.command(name="status", description="لوحة تحكم حالة البوت (مشرفين مصرح لهم فقط)")
+# Bot status command - Public viewing, admin controls
+@bot.tree.command(name="status", description="عرض حالة البوت الحالية")
 @app_commands.describe()
 async def bot_status(interaction: discord.Interaction):
-    """Bot status control panel - RESTRICTED to authorized User IDs only"""
-    
-    # Check if user is authorized admin first
-    ADMIN_USER_IDS = [882391937217364018, 439563168897957888, 797509248569049138, 844344445797531679]
-    if interaction.user.id not in ADMIN_USER_IDS:
-        await interaction.response.send_message("❌ ليس لديك صلاحية لاستخدام هذا الأمر!", ephemeral=True)
-        return
+    """Show bot status - everyone can view, only authorized admins can control"""
     
     # Determine status display
     if bot_status_mode == "available":
@@ -542,7 +554,7 @@ async def bot_status(interaction: discord.Interaction):
     
     # Create status embed
     embed = discord.Embed(
-        title="🤖 لوحة تحكم HeatSeeker Bot",
+        title="🤖 حالة HeatSeeker Bot",
         description=f"**Created By Fahad <3**\n\n{status_text}\n*{status_description}*",
         color=status_color,
         timestamp=datetime.now()
@@ -556,11 +568,17 @@ async def bot_status(interaction: discord.Interaction):
         inline=False
     )
     
-    embed.set_footer(text="استخدم الأزرار أدناه لتغيير حالة البوت")
-    
-    # Always show control buttons for authorized admins
-    view = BotStatusAdminView()
-    await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+    # Check if user is authorized admin for control buttons
+    ADMIN_USER_IDS = [882391937217364018, 439563168897957888, 797509248569049138, 844344445797531679]
+    if interaction.user.id in ADMIN_USER_IDS:
+        # Admin sees control buttons
+        embed.set_footer(text="👑 استخدم الأزرار أدناه لتغيير حالة البوت")
+        view = BotStatusAdminView()
+        await interaction.response.send_message(embed=embed, view=view)
+    else:
+        # Regular users see status only
+        embed.set_footer(text="📊 حالة البوت الحالية")
+        await interaction.response.send_message(embed=embed)
 
 # Result Menu Select View
 class ResultSelect(discord.ui.Select):
