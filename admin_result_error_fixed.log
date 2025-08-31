@@ -1,0 +1,4 @@
+  File "/home/runner/workspace/main.py", line 1131
+    if new_winner != -1:  # If match is not being cancelled
+    ^^
+SyntaxError: expected 'except' or 'finally' block

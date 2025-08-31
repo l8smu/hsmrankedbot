@@ -1,11 +1,8 @@
-[30;1m2025-08-28 07:22:18[0m [34;1mINFO    [0m [35mdiscord.client[0m logging in using static token
+[30;1m2025-08-31 09:19:08[0m [34;1mINFO    [0m [35mdiscord.client[0m logging in using static token
 ✅ HTTP health check server started
 🚀 Starting HeatSeeker Discord Bot...
  * Serving Flask app 'main'
  * Debug mode: off
-[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
- * Running on all addresses (0.0.0.0)
- * Running on http://127.0.0.1:8080
- * Running on http://172.31.86.226:8080
-[33mPress CTRL+C to quit[0m
-[30;1m2025-08-28 07:22:19[0m [34;1mINFO    [0m [35mdiscord.gateway[0m Shard ID None has connected to Gateway (Session ID: 13305fa8001d19a56b5fe6aa6e31c181).
+Address already in use
+Port 8080 is in use by another program. Either identify and stop that program, or start the server with a different port.
+[30;1m2025-08-31 09:19:09[0m [34;1mINFO    [0m [35mdiscord.gateway[0m Shard ID None has connected to Gateway (Session ID: 21764eba6ad5c17184660e3e75bf6f6d).

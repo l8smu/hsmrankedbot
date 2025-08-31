@@ -1,0 +1,4 @@
+  File "/home/runner/workspace/main.py", line 1168
+    cursor.execute(
+    ^^^^^^
+SyntaxError: expected 'except' or 'finally' block
