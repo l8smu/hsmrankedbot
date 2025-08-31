@@ -514,11 +514,17 @@ class BotStatusAdminView(discord.ui.View):
         await interaction.response.edit_message(embed=embed, view=self)
         print(f"🔴 ADMIN: {interaction.user.display_name} set bot status to OFFLINE")
 
-# Bot status command - Show current status with admin controls for authorized users
-@bot.tree.command(name="status", description="عرض حالة البوت (متاح/صيانة/متوقف)")
+# Bot status command - RESTRICTED to authorized admins only
+@bot.tree.command(name="status", description="لوحة تحكم حالة البوت (مشرفين مصرح لهم فقط)")
 @app_commands.describe()
 async def bot_status(interaction: discord.Interaction):
-    """Show bot status with admin controls for authorized users"""
+    """Bot status control panel - RESTRICTED to authorized User IDs only"""
+    
+    # Check if user is authorized admin first
+    ADMIN_USER_IDS = [882391937217364018, 439563168897957888, 797509248569049138, 844344445797531679]
+    if interaction.user.id not in ADMIN_USER_IDS:
+        await interaction.response.send_message("❌ ليس لديك صلاحية لاستخدام هذا الأمر!", ephemeral=True)
+        return
     
     # Determine status display
     if bot_status_mode == "available":
@@ -536,7 +542,7 @@ async def bot_status(interaction: discord.Interaction):
     
     # Create status embed
     embed = discord.Embed(
-        title="🤖 حالة HeatSeeker Bot",
+        title="🤖 لوحة تحكم HeatSeeker Bot",
         description=f"**Created By Fahad <3**\n\n{status_text}\n*{status_description}*",
         color=status_color,
         timestamp=datetime.now()
@@ -550,15 +556,11 @@ async def bot_status(interaction: discord.Interaction):
         inline=False
     )
     
-    embed.set_footer(text="استخدم /status للتحقق من الحالة")
+    embed.set_footer(text="استخدم الأزرار أدناه لتغيير حالة البوت")
     
-    # Add control buttons for authorized admins only
-    ADMIN_USER_IDS = [882391937217364018, 439563168897957888, 797509248569049138, 844344445797531679]
-    if interaction.user.id in ADMIN_USER_IDS:
-        view = BotStatusAdminView()
-        await interaction.response.send_message(embed=embed, view=view)
-    else:
-        await interaction.response.send_message(embed=embed)
+    # Always show control buttons for authorized admins
+    view = BotStatusAdminView()
+    await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 # Result Menu Select View
 class ResultSelect(discord.ui.Select):
