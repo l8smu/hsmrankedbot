@@ -1,0 +1,11 @@
+✅ HTTP health check server started
+🚀 Starting HeatSeeker Discord Bot...
+ * Serving Flask app 'main'
+ * Debug mode: off
+[30;1m2025-08-31 10:16:31[0m [34;1mINFO    [0m [35mdiscord.client[0m logging in using static token
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:8080
+ * Running on http://172.31.122.162:8080
+[33mPress CTRL+C to quit[0m
+[30;1m2025-08-31 10:16:32[0m [34;1mINFO    [0m [35mdiscord.gateway[0m Shard ID None has connected to Gateway (Session ID: 09fd377a877c0b0db8da1e38a54e4ccc).
