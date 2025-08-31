@@ -36,6 +36,9 @@ results_channel_id = 1395514923785916499  # Channel for match results notificati
 matches_category_id = 1396633160267071548  # Category for creating match channels
 match_counter = 1  # Counter for sequential match names (HSM1, HSM2, HSM3...)
 
+# Bot status control system
+bot_status_mode = "available"  # available, maintenance, offline
+
 # Database setup
 conn = sqlite3.connect('hsm_players.db')
 cursor = conn.cursor()
@@ -309,6 +312,11 @@ class QueueView(discord.ui.View):
     async def join_queue(self, interaction: discord.Interaction, button: discord.ui.Button):
         user = interaction.user
         
+        # Check bot status first
+        if bot_status_mode != "available":
+            await interaction.response.send_message("🔧 البوت في صيانة، حاول مرة أخرى لاحقاً!\nتحقق من حالة البوت: `/status`", ephemeral=True)
+            return
+        
         # Check if user is already in queue
         if user in user_queue:
             await interaction.response.send_message(f"❌ {user.display_name}, أنت موجود بالفعل في الطابور!", ephemeral=True)
@@ -425,6 +433,132 @@ class AdminView(discord.ui.View):
         
         await interaction.response.send_message(f"🗑️ تم مسح الطابور! تمت إزالة {queue_size} مستخدم.")
         await update_queue_embed()
+
+# Bot Status Admin Control View for authorized users only
+class BotStatusAdminView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=300)
+    
+    @discord.ui.button(label='🟢 متاح', style=discord.ButtonStyle.success, emoji='🟢')
+    async def set_available(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Set bot status to available"""
+        global bot_status_mode
+        bot_status_mode = "available"
+        
+        embed = discord.Embed(
+            title="🤖 حالة HeatSeeker Bot",
+            description="**Created By Fahad <3**\n\n🟢 متاح ويعمل\n*البوت يعمل بشكل طبيعي ويمكن استخدام الطابور*",
+            color=0x00FF00,
+            timestamp=datetime.now()
+        )
+        
+        embed.add_field(
+            name="⚡ الحالة الحالية",
+            value=f"**🟢 متاح ويعمل**\n"
+                  f"🏓 Ping: {round(bot.latency * 1000)}ms\n"
+                  f"🎮 الطابور: {len(user_queue)}/{queue_limit}",
+            inline=False
+        )
+        
+        embed.set_footer(text="✅ تم تغيير الحالة إلى متاح")
+        await interaction.response.edit_message(embed=embed, view=self)
+        print(f"🟢 ADMIN: {interaction.user.display_name} set bot status to AVAILABLE")
+    
+    @discord.ui.button(label='🟡 صيانة', style=discord.ButtonStyle.secondary, emoji='🟡')
+    async def set_maintenance(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Set bot status to maintenance"""
+        global bot_status_mode
+        bot_status_mode = "maintenance"
+        
+        embed = discord.Embed(
+            title="🤖 حالة HeatSeeker Bot",
+            description="**Created By Fahad <3**\n\n🟡 صيانة مؤقتة\n*البوت تحت الصيانة، الطابور معطل مؤقتاً*",
+            color=0xFFA500,
+            timestamp=datetime.now()
+        )
+        
+        embed.add_field(
+            name="⚡ الحالة الحالية",
+            value=f"**🟡 صيانة مؤقتة**\n"
+                  f"🏓 Ping: {round(bot.latency * 1000)}ms\n"
+                  f"🎮 الطابور: معطل",
+            inline=False
+        )
+        
+        embed.set_footer(text="⚠️ تم تغيير الحالة إلى صيانة - الطابور معطل")
+        await interaction.response.edit_message(embed=embed, view=self)
+        print(f"🟡 ADMIN: {interaction.user.display_name} set bot status to MAINTENANCE")
+    
+    @discord.ui.button(label='🔴 متوقف', style=discord.ButtonStyle.danger, emoji='🔴')
+    async def set_offline(self, interaction: discord.Interaction, button: discord.ui.Button):
+        """Set bot status to offline"""
+        global bot_status_mode
+        bot_status_mode = "offline"
+        
+        embed = discord.Embed(
+            title="🤖 حالة HeatSeeker Bot",
+            description="**Created By Fahad <3**\n\n🔴 متوقف\n*البوت متوقف، جميع الوظائف معطلة*",
+            color=0xFF0000,
+            timestamp=datetime.now()
+        )
+        
+        embed.add_field(
+            name="⚡ الحالة الحالية",
+            value=f"**🔴 متوقف**\n"
+                  f"🏓 Ping: {round(bot.latency * 1000)}ms\n"
+                  f"🎮 الطابور: معطل",
+            inline=False
+        )
+        
+        embed.set_footer(text="🛑 تم تغيير الحالة إلى متوقف - جميع الوظائف معطلة")
+        await interaction.response.edit_message(embed=embed, view=self)
+        print(f"🔴 ADMIN: {interaction.user.display_name} set bot status to OFFLINE")
+
+# Bot status command - Show current status with admin controls for authorized users
+@bot.tree.command(name="status", description="عرض حالة البوت (متاح/صيانة/متوقف)")
+@app_commands.describe()
+async def bot_status(interaction: discord.Interaction):
+    """Show bot status with admin controls for authorized users"""
+    
+    # Determine status display
+    if bot_status_mode == "available":
+        status_text = "🟢 متاح ويعمل"
+        status_color = 0x00FF00  # Green
+        status_description = "البوت يعمل بشكل طبيعي ويمكن استخدام الطابور"
+    elif bot_status_mode == "maintenance":
+        status_text = "🟡 صيانة مؤقتة"
+        status_color = 0xFFA500  # Orange  
+        status_description = "البوت تحت الصيانة، الطابور معطل مؤقتاً"
+    else:  # offline
+        status_text = "🔴 متوقف"
+        status_color = 0xFF0000  # Red
+        status_description = "البوت متوقف، جميع الوظائف معطلة"
+    
+    # Create status embed
+    embed = discord.Embed(
+        title="🤖 حالة HeatSeeker Bot",
+        description=f"**Created By Fahad <3**\n\n{status_text}\n*{status_description}*",
+        color=status_color,
+        timestamp=datetime.now()
+    )
+    
+    embed.add_field(
+        name="⚡ الحالة الحالية",
+        value=f"**{status_text}**\n"
+              f"🏓 Ping: {round(bot.latency * 1000)}ms\n"
+              f"🎮 الطابور: {len(user_queue)}/{queue_limit}",
+        inline=False
+    )
+    
+    embed.set_footer(text="استخدم /status للتحقق من الحالة")
+    
+    # Add control buttons for authorized admins only
+    ADMIN_USER_IDS = [882391937217364018, 439563168897957888, 797509248569049138, 844344445797531679]
+    if interaction.user.id in ADMIN_USER_IDS:
+        view = BotStatusAdminView()
+        await interaction.response.send_message(embed=embed, view=view)
+    else:
+        await interaction.response.send_message(embed=embed)
 
 # Result Menu Select View
 class ResultSelect(discord.ui.Select):
@@ -1630,108 +1764,6 @@ async def process_match_result(interaction: discord.Interaction, match_name: str
         print(f"خطأ في حذف قنوات {match_name}: {e}")
 
 
-
-# Bot status command
-@bot.tree.command(name="status", description="عرض حالة البوت والإحصائيات")
-@app_commands.describe()
-async def bot_status(interaction: discord.Interaction):
-    """Show bot status and statistics"""
-    
-    # Get database stats
-    cursor.execute("SELECT COUNT(*) FROM players")
-    total_players = cursor.fetchone()[0]
-    
-    cursor.execute("SELECT COUNT(*) FROM players WHERE placement_matches >= 5")
-    ranked_players = cursor.fetchone()[0]
-    
-    cursor.execute("SELECT COUNT(*) FROM matches WHERE completed = 1")
-    total_matches = cursor.fetchone()[0]
-    
-    # Create status embed
-    embed = discord.Embed(
-        title="🤖 حالة HeatSeeker Bot",
-        description="**Created By Fahad <3**",
-        color=0x00FF00,
-        timestamp=datetime.now()
-    )
-    
-    embed.add_field(
-        name="⚡ معلومات البوت",
-        value=f"• **الحالة:** 🟢 متصل ويعمل\n"
-              f"• **Ping:** {round(bot.latency * 1000)}ms\n"
-              f"• **السيرفرات:** {len(bot.guilds)}\n"
-              f"• **Discord.py:** {discord.__version__}",
-        inline=True
-    )
-    
-    embed.add_field(
-        name="📊 إحصائيات قاعدة البيانات",
-        value=f"• **إجمالي اللاعبين:** {total_players}\n"
-              f"• **لاعبين مرانكين:** {ranked_players}\n"
-              f"• **إجمالي المباريات:** {total_matches}\n"
-              f"• **قاعدة البيانات:** SQLite",
-        inline=True
-    )
-    
-    embed.add_field(
-        name="🎮 النشاط الحالي",
-        value=f"• **في الطابور:** {len(user_queue)}/{queue_limit}\n"
-              f"• **مباريات نشطة:** {len(active_matches)}\n"
-              f"• **قناة الطابور:** {'✅ مُعَيَّنة' if queue_channel else '❌ غير مُعَيَّنة'}\n"
-              f"• **لوحة المتصدرين:** {'✅ نشطة' if leaderboard_channel_id else '❌ غير نشطة'}",
-        inline=False
-    )
-    
-    embed.set_footer(text="HeatSeeker Management System")
-    await interaction.response.send_message(embed=embed, ephemeral=True)
-
-# Reset database command - Simple version
-@bot.tree.command(name="reset_database", description="إعادة تعيين قاعدة البيانات (مشرفين فقط)")
-@app_commands.describe()
-@app_commands.default_permissions(administrator=True)
-async def reset_database(interaction: discord.Interaction):
-    """Reset database (Admin only)"""
-    # Check admin permissions
-    ADMIN_USER_IDS = [882391937217364018, 439563168897957888, 797509248569049138, 844344445797531679]
-    if interaction.user.id not in ADMIN_USER_IDS:
-        await interaction.response.send_message("❌ ليس لديك صلاحية لاستخدام هذا الأمر!", ephemeral=True)
-        return
-    
-    # Simple reset with confirmation
-    embed = discord.Embed(
-        title="⚠️ إعادة تعيين قاعدة البيانات",
-        description="هذا سيحذف جميع البيانات!\nهل أنت متأكد؟",
-        color=0xFF0000
-    )
-    
-    view = SimpleResetView()
-    await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
-
-# Simple reset view
-class SimpleResetView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=60)
-    
-    @discord.ui.button(label='✅ نعم', style=discord.ButtonStyle.danger)
-    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            cursor.execute("DELETE FROM players")
-            cursor.execute("DELETE FROM matches")
-            conn.commit()
-            
-            await interaction.response.edit_message(
-                content="✅ تم حذف جميع البيانات بنجاح!",
-                embed=None, view=None
-            )
-        except Exception as e:
-            await interaction.response.send_message(f"❌ خطأ: {e}", ephemeral=True)
-    
-    @discord.ui.button(label='❌ إلغاء', style=discord.ButtonStyle.secondary)
-    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
-        await interaction.response.edit_message(
-            content="❌ تم إلغاء العملية",
-            embed=None, view=None
-        )
 
 # Error handling
 @setup_queue.error
