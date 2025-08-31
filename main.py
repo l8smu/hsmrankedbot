@@ -426,92 +426,6 @@ class AdminView(discord.ui.View):
         await interaction.response.send_message(f"🗑️ تم مسح الطابور! تمت إزالة {queue_size} مستخدم.")
         await update_queue_embed()
 
-# Database Reset Confirmation View
-class DatabaseResetConfirmView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=60)
-    
-    @discord.ui.button(label='✅ نعم، احذف كل شيء', style=discord.ButtonStyle.danger, emoji='⚠️')
-    async def confirm_reset(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            # Clear all tables
-            cursor.execute("DELETE FROM players")
-            cursor.execute("DELETE FROM matches")
-            cursor.execute("DELETE FROM sqlite_sequence WHERE name IN ('players', 'matches')")
-            conn.commit()
-            
-            embed = discord.Embed(
-                title="✅ تم إعادة تعيين قاعدة البيانات",
-                description="**تم حذف جميع البيانات بنجاح!**\n\n"
-                           "• جميع نقاط اللاعبين محذوفة\n"
-                           "• جميع المباريات محذوفة\n"
-                           "• النقاط الافتراضية: 1300 MMR\n"
-                           "• جميع اللاعبين الجدد سيبدؤون بـ 5 مباريات تأهيلية",
-                color=0x00FF00
-            )
-            
-            await interaction.response.edit_message(embed=embed, view=None)
-            print(f"🗑️ ADMIN: {interaction.user.display_name} reset entire database")
-            
-        except Exception as e:
-            await interaction.response.send_message(f"❌ خطأ في إعادة تعيين قاعدة البيانات: {e}", ephemeral=True)
-    
-    @discord.ui.button(label='❌ إلغاء', style=discord.ButtonStyle.secondary)
-    async def cancel_reset(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(
-            title="❌ تم إلغاء العملية",
-            description="لم يتم حذف أي بيانات.",
-            color=0x808080
-        )
-        await interaction.response.edit_message(embed=embed, view=None)
-
-# Placement Reset Confirmation View
-class PlacementResetConfirmView(discord.ui.View):
-    def __init__(self):
-        super().__init__(timeout=60)
-    
-    @discord.ui.button(label='✅ نعم، إعادة تعيين التأهيل', style=discord.ButtonStyle.primary, emoji='🔄')
-    async def confirm_placement_reset(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            # Reset placement matches for all players
-            cursor.execute("UPDATE players SET placement_matches = 0")
-            conn.commit()
-            
-            # Remove rank roles from all players
-            if interaction.guild:
-                for member in interaction.guild.members:
-                    try:
-                        for role in member.roles:
-                            if role.name in ['Silver', 'Platinum', 'Crystal', 'Elite', 'Master', 'Legendary']:
-                                await member.remove_roles(role)
-                    except:
-                        continue
-            
-            embed = discord.Embed(
-                title="✅ تم إعادة تعيين المباريات التأهيلية",
-                description="**تم إعادة تعيين التأهيل بنجاح!**\n\n"
-                           "• جميع اللاعبين عادوا إلى 0/5 مباريات تأهيلية\n"
-                           "• تم حذف جميع أدوار الرانك\n"
-                           "• النقاط والانتصارات محفوظة\n"
-                           "• اللاعبون يحتاجون 5 مباريات للحصول على رانك جديد",
-                color=0x00FF00
-            )
-            
-            await interaction.response.edit_message(embed=embed, view=None)
-            print(f"🔄 ADMIN: {interaction.user.display_name} reset all placement matches")
-            
-        except Exception as e:
-            await interaction.response.send_message(f"❌ خطأ في إعادة تعيين المباريات التأهيلية: {e}", ephemeral=True)
-    
-    @discord.ui.button(label='❌ إلغاء', style=discord.ButtonStyle.secondary)
-    async def cancel_placement_reset(self, interaction: discord.Interaction, button: discord.ui.Button):
-        embed = discord.Embed(
-            title="❌ تم إلغاء العملية",
-            description="لم يتم تعديل أي مباريات تأهيلية.",
-            color=0x808080
-        )
-        await interaction.response.edit_message(embed=embed, view=None)
-
 # Result Menu Select View
 class ResultSelect(discord.ui.Select):
     def __init__(self, match_name: str):
@@ -623,36 +537,15 @@ class AdminResultActionView(discord.ui.View):
     
     @discord.ui.button(label='Team 1 يفوز', style=discord.ButtonStyle.primary, emoji='🔵')
     async def team1_wins(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            await self.modify_result(interaction, 1, "Team 1 (Blue)")
-        except Exception as e:
-            print(f"❌ Error in team1_wins: {e}")
-            try:
-                await interaction.response.send_message(f"❌ خطأ: {str(e)[:50]}", ephemeral=True)
-            except:
-                pass
+        await self.modify_result(interaction, 1, "Team 1 (Blue)")
     
     @discord.ui.button(label='Team 2 يفوز', style=discord.ButtonStyle.primary, emoji='🟠')
     async def team2_wins(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            await self.modify_result(interaction, 2, "Team 2 (Orange)")
-        except Exception as e:
-            print(f"❌ Error in team2_wins: {e}")
-            try:
-                await interaction.response.send_message(f"❌ خطأ: {str(e)[:50]}", ephemeral=True)
-            except:
-                pass
+        await self.modify_result(interaction, 2, "Team 2 (Orange)")
     
     @discord.ui.button(label='إلغاء المباراة', style=discord.ButtonStyle.danger, emoji='❌')
     async def cancel_match(self, interaction: discord.Interaction, button: discord.ui.Button):
-        try:
-            await self.modify_result(interaction, -1, "ملغية")
-        except Exception as e:
-            print(f"❌ Error in cancel_match: {e}")
-            try:
-                await interaction.response.send_message(f"❌ خطأ: {str(e)[:50]}", ephemeral=True)
-            except:
-                pass
+        await self.modify_result(interaction, -1, "ملغية")
     
     async def modify_result(self, interaction: discord.Interaction, new_winner: int, result_text: str):
         """Modify match result and update player stats"""
@@ -1407,90 +1300,6 @@ async def match_result(interaction: discord.Interaction):
     """Report match result with interactive menu"""
     await open_result_menu(interaction)
 
-# Reset database command
-@bot.tree.command(name="reset_database", description="إعادة تعيين قاعدة البيانات وضبط النقاط الافتراضية إلى 1300")
-@app_commands.describe()
-@app_commands.default_permissions(administrator=True)
-async def reset_database(interaction: discord.Interaction):
-    """Reset the entire database and set default MMR to 1300 (Admin only)"""
-    # Check if user is authorized admin
-    ADMIN_USER_IDS = [882391937217364018, 439563168897957888, 797509248569049138, 844344445797531679]
-    if interaction.user.id not in ADMIN_USER_IDS:
-        await interaction.response.send_message("❌ ليس لديك صلاحية لاستخدام هذا الأمر!", ephemeral=True)
-        return
-    if not interaction.guild:
-        await interaction.response.send_message("❌ هذا الأمر يعمل في السيرفر فقط!", ephemeral=True)
-        return
-    
-    # Create confirmation embed
-    embed = discord.Embed(
-        title="⚠️ تأكيد إعادة تعيين قاعدة البيانات",
-        description="**هذا الإجراء خطير وغير قابل للإلغاء!**\n\n"
-                   "سيتم حذف:\n"
-                   "• جميع نقاط اللاعبين\n"
-                   "• جميع الانتصارات والخسارات\n"
-                   "• جميع المباريات التأهيلية\n"
-                   "• تاريخ جميع المباريات\n\n"
-                   "سيتم ضبط النقاط الافتراضية الجديدة إلى: **1300 MMR**",
-        color=0xFF0000
-    )
-    
-    embed.add_field(
-        name="🔄 ما سيحدث بعد إعادة التعيين",
-        value="• جميع اللاعبين سيبدؤون بـ 1300 نقطة\n"
-              "• سيحتاج الجميع لعب 5 مباريات تأهيلية جديدة\n"
-              "• لوحة المتصدرين ستكون فارغة\n"
-              "• تاريخ المباريات سيختفي نهائياً",
-        inline=False
-    )
-    
-    embed.add_field(
-        name="⚠️ تحذير أخير",
-        value="لا يمكن التراجع عن هذا الإجراء!\nتأكد من أنك تريد المتابعة فعلاً.",
-        inline=False
-    )
-    
-    view = DatabaseResetConfirmView()
-    await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
-
-# Reset placements command  
-@bot.tree.command(name="reset_placements", description="إعادة تعيين المباريات التأهيلية لجميع اللاعبين")
-@app_commands.describe()
-@app_commands.default_permissions(administrator=True)
-async def reset_placements(interaction: discord.Interaction):
-    """Reset placement matches for all players (Admin only)"""
-    # Check if user is authorized admin
-    ADMIN_USER_IDS = [882391937217364018, 439563168897957888, 797509248569049138, 844344445797531679]
-    if interaction.user.id not in ADMIN_USER_IDS:
-        await interaction.response.send_message("❌ ليس لديك صلاحية لاستخدام هذا الأمر!", ephemeral=True)
-        return
-    if not interaction.guild:
-        await interaction.response.send_message("❌ هذا الأمر يعمل في السيرفر فقط!", ephemeral=True)
-        return
-    
-    # Create confirmation embed
-    embed = discord.Embed(
-        title="⚠️ تأكيد إعادة تعيين المباريات التأهيلية",
-        description="**سيتم إعادة تعيين المباريات التأهيلية لجميع اللاعبين**\n\n"
-                   "ما سيحدث:\n"
-                   "• جميع اللاعبين سيعودون إلى 0/5 مباريات تأهيلية\n"
-                   "• سيحتاج الجميع للعب 5 مباريات جديدة للحصول على رانك\n"
-                   "• النقاط والانتصارات والهزائم ستبقى كما هي\n"
-                   "• الأدوار الحالية ستُحذف مؤقتاً حتى إكمال التأهيل",
-        color=0xFFA500
-    )
-    
-    embed.add_field(
-        name="ℹ️ معلومات إضافية",
-        value="• هذا مفيد عند تغيير نظام الرانكات\n"
-              "• اللاعبون سيحتفظون بخبرتهم (النقاط)\n"
-              "• مناسب لإعادة معايرة النظام",
-        inline=False
-    )
-    
-    view = PlacementResetConfirmView()
-    await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
-
 async def open_result_menu(interaction: discord.Interaction):
     """Open result selection menu for match participants"""
     user = interaction.user
@@ -1821,6 +1630,108 @@ async def process_match_result(interaction: discord.Interaction, match_name: str
         print(f"خطأ في حذف قنوات {match_name}: {e}")
 
 
+
+# Bot status command
+@bot.tree.command(name="status", description="عرض حالة البوت والإحصائيات")
+@app_commands.describe()
+async def bot_status(interaction: discord.Interaction):
+    """Show bot status and statistics"""
+    
+    # Get database stats
+    cursor.execute("SELECT COUNT(*) FROM players")
+    total_players = cursor.fetchone()[0]
+    
+    cursor.execute("SELECT COUNT(*) FROM players WHERE placement_matches >= 5")
+    ranked_players = cursor.fetchone()[0]
+    
+    cursor.execute("SELECT COUNT(*) FROM matches WHERE completed = 1")
+    total_matches = cursor.fetchone()[0]
+    
+    # Create status embed
+    embed = discord.Embed(
+        title="🤖 حالة HeatSeeker Bot",
+        description="**Created By Fahad <3**",
+        color=0x00FF00,
+        timestamp=datetime.now()
+    )
+    
+    embed.add_field(
+        name="⚡ معلومات البوت",
+        value=f"• **الحالة:** 🟢 متصل ويعمل\n"
+              f"• **Ping:** {round(bot.latency * 1000)}ms\n"
+              f"• **السيرفرات:** {len(bot.guilds)}\n"
+              f"• **Discord.py:** {discord.__version__}",
+        inline=True
+    )
+    
+    embed.add_field(
+        name="📊 إحصائيات قاعدة البيانات",
+        value=f"• **إجمالي اللاعبين:** {total_players}\n"
+              f"• **لاعبين مرانكين:** {ranked_players}\n"
+              f"• **إجمالي المباريات:** {total_matches}\n"
+              f"• **قاعدة البيانات:** SQLite",
+        inline=True
+    )
+    
+    embed.add_field(
+        name="🎮 النشاط الحالي",
+        value=f"• **في الطابور:** {len(user_queue)}/{queue_limit}\n"
+              f"• **مباريات نشطة:** {len(active_matches)}\n"
+              f"• **قناة الطابور:** {'✅ مُعَيَّنة' if queue_channel else '❌ غير مُعَيَّنة'}\n"
+              f"• **لوحة المتصدرين:** {'✅ نشطة' if leaderboard_channel_id else '❌ غير نشطة'}",
+        inline=False
+    )
+    
+    embed.set_footer(text="HeatSeeker Management System")
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+# Reset database command - Simple version
+@bot.tree.command(name="reset_database", description="إعادة تعيين قاعدة البيانات (مشرفين فقط)")
+@app_commands.describe()
+@app_commands.default_permissions(administrator=True)
+async def reset_database(interaction: discord.Interaction):
+    """Reset database (Admin only)"""
+    # Check admin permissions
+    ADMIN_USER_IDS = [882391937217364018, 439563168897957888, 797509248569049138, 844344445797531679]
+    if interaction.user.id not in ADMIN_USER_IDS:
+        await interaction.response.send_message("❌ ليس لديك صلاحية لاستخدام هذا الأمر!", ephemeral=True)
+        return
+    
+    # Simple reset with confirmation
+    embed = discord.Embed(
+        title="⚠️ إعادة تعيين قاعدة البيانات",
+        description="هذا سيحذف جميع البيانات!\nهل أنت متأكد؟",
+        color=0xFF0000
+    )
+    
+    view = SimpleResetView()
+    await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+# Simple reset view
+class SimpleResetView(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=60)
+    
+    @discord.ui.button(label='✅ نعم', style=discord.ButtonStyle.danger)
+    async def confirm(self, interaction: discord.Interaction, button: discord.ui.Button):
+        try:
+            cursor.execute("DELETE FROM players")
+            cursor.execute("DELETE FROM matches")
+            conn.commit()
+            
+            await interaction.response.edit_message(
+                content="✅ تم حذف جميع البيانات بنجاح!",
+                embed=None, view=None
+            )
+        except Exception as e:
+            await interaction.response.send_message(f"❌ خطأ: {e}", ephemeral=True)
+    
+    @discord.ui.button(label='❌ إلغاء', style=discord.ButtonStyle.secondary)
+    async def cancel(self, interaction: discord.Interaction, button: discord.ui.Button):
+        await interaction.response.edit_message(
+            content="❌ تم إلغاء العملية",
+            embed=None, view=None
+        )
 
 # Error handling
 @setup_queue.error
