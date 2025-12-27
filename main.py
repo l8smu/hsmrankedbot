@@ -57,11 +57,11 @@ async def check_twitch_live():
             if channel:
                 embed = discord.Embed(
                     title="🔴 بدأ البث الآن على تويتش!",
-                    description=f"بثث تعالوو !! **{titanium}**",
-                    url=https://www.twitch.tv/titanium_h1,
+                    description=f"تعالوا تابعوا البث المباشر لقناة **{TWITCH_CHANNEL_NAME}**",
+                    url=TWITCH_CHANNEL_URL,
                     color=0x9146FF
                 )
-                embed.add_field(name="القناة", value=f"[اضغط هنا للمتابعة](https://www.twitch.tv/titanium_h1)")
+                embed.add_field(name="القناة", value=f"[اضغط هنا للمتابعة]({TWITCH_CHANNEL_URL})")
                 embed.set_thumbnail(url="https://static-cdn.jtvnw.net/jtv_user_pictures/twitch-profile_image-6034079857d4775d-300x300.png")
                 await channel.send(content="@everyone", embed=embed)
             STREAM_STATUS["is_live"] = True
@@ -74,21 +74,23 @@ async def check_twitch_live():
 @bot.event
 async def on_ready():
     print(f"✅ Logged in as {bot.user}")
+    
+    # ضبط حالة البوت (Presence)
+    try:
+        activity = discord.Streaming(
+     ا       name="HSM Ranked 🎤", 
+            url=TWITCH_CHANNEL_URL
+        )
+        await bot.change_presence(
+            activity=activity,
+            status=discord.Status.online
+        )
+        print(f"✨ Presence set: {activity.name}")
+    except Exception as e:
+        print(f"❌ Error setting presence: {e}")
+    
     if not check_twitch_live.is_running():
         check_twitch_live.start()
-        
-@bot.event
-async def on_ready():
-    print(f"✅ Logged in as {bot.user}")
-            
- # ضبط حالة البوت (Presence)
-    await bot.change_presence(
-        activity=discord.Streaming(
-            name=" HEATSEEKER🔴🎤", 
-            url=TWITCH_CHANNEL_URL
-        ),
-        status=discord.Status.online
-    )
 # Queue storage
 user_queue = deque()
 queue_limit = 4
