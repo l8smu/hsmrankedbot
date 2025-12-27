@@ -7,33 +7,36 @@ from collections import deque
 import asyncio
 from datetime import datetime, timedelta
 import sqlite3
-import os
-from discord.ext import commands
 
-TOKEN = os.getenv("DISCORD_TOKEN")
-
-bot = commands.Bot(command_prefix="!")
-
-bot.run(TOKEN)
-
-# Load environment variables
+# تحميل المتغيرات
 load_dotenv()
 
-# Bot configuration
+# جلب التوكن
+TOKEN = os.getenv("DISCORD_TOKEN")
+
+# intents
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix='!', intents=intents)
+intents.members = True
 
-# Queue storage - using deque for efficient queue operations
+# إنشاء البوت
+bot = commands.Bot(command_prefix="!", intents=intents)
+
+@bot.event
+async def on_ready():
+    print(f"✅ Logged in as {bot.user}")
+
+# Queue storage
 user_queue = deque()
-queue_limit = 4  # Maximum queue size (2v2)
-queue_timeout = 300  # 5 minutes timeout
-user_last_activity = {}  # Track user activity for timeout
-queue_message = None  # Store the queue message to avoid duplicates
-queue_channel = None  # Store the queue channel object
-queue_channel_id = None  # Store the channel ID for queue
-active_matches = {}  # Store active match information
-match_results = {}  # Store match results to prevent duplicate reporting
+queue_limit = 4
+queue_timeout = 300
+user_last_activity = {}
+queue_message = None
+queue_channel = None
+queue_channel_id = None
+active_matches = {}
+match_results = {}
+
 
 # Player MMR system
 player_points = {}  # Dictionary to store player MMR {user_id: mmr}
@@ -1800,16 +1803,5 @@ async def permission_error(ctx, error):
     if isinstance(error, commands.MissingPermissions):
         await ctx.send("❌ ليس لديك صلاحية لاستخدام هذا الأمر!")
 
-# Run the bot
-if __name__ == "__main__":
-    token = os.getenv('DISCORD_TOKEN')
-    if not token:
-        print("❌ Error: DISCORD_TOKEN not found in environment variables!")
-        print("Please set your Discord bot token in the .env file")
-    else:
-        try:
-            bot.run(token)
-        except discord.LoginFailure:
-            print("❌ Error: Invalid Discord token!")
-        except Exception as e:
-            print(f"❌ Error starting bot: {e}")
+# تشغيل البوت (آخر سطر)
+bot.run(TOKEN)
