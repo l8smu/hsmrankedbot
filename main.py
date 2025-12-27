@@ -7,6 +7,14 @@ from collections import deque
 import asyncio
 from datetime import datetime, timedelta
 import sqlite3
+import os
+from discord.ext import commands
+
+TOKEN = os.getenv("DISCORD_TOKEN")
+
+bot = commands.Bot(command_prefix="!")
+
+bot.run(TOKEN)
 
 # Load environment variables
 load_dotenv()
