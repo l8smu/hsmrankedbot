@@ -77,6 +77,10 @@ async def on_ready():
     if not check_twitch_live.is_running():
         check_twitch_live.start()
         
+@bot.event
+async def on_ready():
+    print(f"✅ Logged in as {bot.user}")
+            
  # ضبط حالة البوت (Presence)
     await bot.change_presence(
         activity=discord.Streaming(
