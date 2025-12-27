@@ -7,13 +7,24 @@ from collections import deque
 import asyncio
 from datetime import datetime, timedelta
 import sqlite3
-import aiohttp
 
 # تحميل المتغيرات
 load_dotenv()
 
 # جلب التوكن
 TOKEN = os.getenv("DISCORD_TOKEN")
+
+# intents
+intents = discord.Intents.default()
+intents.message_content = True
+intents.members = True
+
+# إنشاء البوت (تعريف واحد فقط)
+bot = commands.Bot(command_prefix="!", intents=intents)
+
+@bot.event
+async def on_ready():
+    print(f"✅ Logged in as {bot.user}")
 
 # Twitch configuration
 TWITCH_CHANNEL_URL = "https://www.twitch.tv/titanium_h1"
@@ -57,9 +68,6 @@ async def check_twitch_live():
     except Exception as e:
         print(f"Error checking twitch status: {e}")
 
-@bot.event
-async def on_ready():
-    print(f"✅ Logged in as {bot.user}")
     
     # ضبط حالة البوت (Presence)
     try:
